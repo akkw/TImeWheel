@@ -22,9 +22,9 @@ public class TimingWheel {
 
     /**
      * 时间格
+     * 时间范围左闭右开[n,m)
      */
     private final TimerTaskList buckets[];
-
 
 
     private long currentTime;
@@ -42,13 +42,47 @@ public class TimingWheel {
     }
 
 
-
-
     private synchronized void createOverflowWheel() {
+        if (this.overflowWheel != null) {
+            return;
+        }
         this.overflowWheel = new TimingWheel(
                 interval,
                 wheelSize,
                 currentTime
         );
     }
+
+
+    public void add(TimerTaskEntry timerTaskEntry) {
+        long expiration = timerTaskEntry.getExpiration();
+        if (timerTaskEntry.isCancelled()) {
+
+        } else if (expiration < currentTime + tickMs) {
+
+        } else if (expiration < currentTime + interval) {
+            int virtualId = (int) (expiration / tickMs);
+            TimerTaskList bucket = buckets[virtualId];
+
+            bucket.add(timerTaskEntry);
+
+            // TODO 加入延迟队列
+        } else {
+            createOverflowWheel();
+
+            overflowWheel.add(timerTaskEntry);
+        }
+
+    }
+
+    public void advanceClock(long timeMs) {
+        if (timeMs >= currentTime + tickMs) {
+            currentTime = timeMs - (timeMs % tickMs);
+
+            if (overflowWheel != null) {
+                overflowWheel.advanceClock(currentTime);
+            }
+        }
+    }
+
 }
