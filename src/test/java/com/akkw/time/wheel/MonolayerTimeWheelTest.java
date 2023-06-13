@@ -27,7 +27,6 @@ public class MonolayerTimeWheelTest {
     public void AtomicMarkableReferenceTest() {
         Object o = new Object();
         AtomicMarkableReference<Object> atomicMarkableReference = new AtomicMarkableReference<>(o, true);
-        new
-        atomicMarkableReference.compareAndSet(o, )
+
     }
 }

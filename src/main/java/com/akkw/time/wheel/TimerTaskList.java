@@ -3,6 +3,7 @@ package com.akkw.time.wheel;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
 import java.util.concurrent.atomic.AtomicLongFieldUpdater;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class TimerTaskList {
 
@@ -17,6 +18,7 @@ public class TimerTaskList {
     private static final VarHandle HEAD;
     private static final VarHandle TAIL;
 
+    private final ReentrantLock mainLock = new ReentrantLock();
 
     static {
         try {
@@ -30,22 +32,44 @@ public class TimerTaskList {
         }
     }
 
+    TimerTaskEntry getHead() {
+        return head;
+    }
+
+    TimerTaskEntry getTail() {
+        return tail;
+    }
+
+
+    public long getExpiration() {
+        return expiration;
+    }
 
     public boolean setExpiration(long expirationMs) {
         return EXPIRATION.getAndSet(this, expirationMs) != expirationMs;
     }
 
-    public void add(TimerTaskEntry entry) {
+    public boolean add(TimerTaskEntry entry) {
         if (entry == null) {
-            return;
+            return false;
         }
+
+
         for (; ; ) {
             TimerTaskEntry t = tail;
             if (t != null) {
-                entry.setPrevRelaxed(t);
-                if (compareAndSetTail(t, entry)) {
-                    t.next = entry;
-                    return;
+                boolean isLocked = t.addWriteLock();
+                if (!isLocked) {
+                    continue;
+                }
+                try {
+                    entry.setPrevRelaxed(t);
+                    if (compareAndSetTail(t, entry)) {
+                        t.next = entry;
+                        return true;
+                    }
+                } finally {
+                    t.writeUnlock();
                 }
             } else {
                 initializeSyncList();
@@ -60,52 +84,91 @@ public class TimerTaskList {
      *
      * @param entry
      */
-    public void remove(TimerTaskEntry entry) {
+    public void remove(TimerTaskEntry entry) throws InterruptedException {
         if (entry != null && entry.getTimerTaskList() == this) {
-            boolean success = lockEntry(entry);
 
+            if (entry == tail) {
+                lockTailEntry(entry);
+            } else {
+                lockEntry(entry);
+            }
 
-
+            TimerTaskEntry prev = entry.prev;
+            TimerTaskEntry next = entry.next;
+            try {
+                if (entry == tail) {
+                    if (compareAndSetTail(entry, prev)) {
+                        prev.next = null;
+                    }
+                } else {
+                    next.prev = prev;
+                    prev.next = next;
+                }
+            } finally {
+                if (next != null) {
+                    next.readUnlock();
+                }
+                prev.readUnlock();
+            }
+            entry.next = entry;
+            entry.prev = entry;
         }
     }
 
-    private boolean lockEntry(TimerTaskEntry entry) {
+    private void lockTailEntry(TimerTaskEntry entry) throws InterruptedException {
+
+        boolean success;
+
+        do {
+            if (Thread.interrupted()) {
+                throw new InterruptedException();
+            }
+
+            success = entry.addWriteLock();
+            if (!success) {
+                continue;
+            }
+            TimerTaskEntry prev = entry.prev;
+            success = prev.addReadLock();
+            if (!success) {
+                entry.writeUnlock();
+            }
+        } while (!success);
+    }
+
+
+    private void lockEntry(TimerTaskEntry entry) throws InterruptedException {
         boolean success;
         boolean prevLockSuccess;
         boolean nextLockSuccess;
-        try {
-            do {
-                success = entry.addWriteLock();
-                if (!success) {
-                    continue;
-                }
-                TimerTaskEntry prev = entry.prev;
-                TimerTaskEntry next = entry.next;
+        do {
+            if (Thread.interrupted()) {
+                throw new InterruptedException();
+            }
 
-                prevLockSuccess = prev.addReadLock();
-                nextLockSuccess = next.addReadLock();
-                success = prevLockSuccess && nextLockSuccess;
+            success = entry.addWriteLock();
+            if (!success) {
+                continue;
+            }
+            TimerTaskEntry prev = entry.prev;
+            TimerTaskEntry next = entry.next;
 
-                if (!success) {
-                    if (prevLockSuccess) {
-                        prev.readUnlock();
-                    }
+            prevLockSuccess = prev.addReadLock();
+            nextLockSuccess = next.addReadLock();
+            success = prevLockSuccess && nextLockSuccess;
 
-                    if (nextLockSuccess) {
-                        next.readUnlock();
-                    }
-
-                    entry.writeUnlock();
+            if (!success) {
+                if (prevLockSuccess) {
+                    prev.readUnlock();
                 }
 
-                if (Thread.interrupted()) {
-                    throw new InterruptedException();
+                if (nextLockSuccess) {
+                    next.readUnlock();
                 }
-            } while (!success);
-        } catch (InterruptedException e) {
-            success = false;
-        }
-        return success;
+
+                entry.writeUnlock();
+            }
+        } while (!success);
     }
 
 
