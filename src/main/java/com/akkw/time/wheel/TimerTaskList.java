@@ -2,6 +2,7 @@ package com.akkw.time.wheel;
 
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -84,11 +85,14 @@ public class TimerTaskList {
      *
      * @param entry
      */
-    public void remove(TimerTaskEntry entry) throws InterruptedException {
+    public void remove(TimerTaskEntry entry) throws Exception {
         if (entry != null && entry.getTimerTaskList() == this) {
 
             if (entry == tail) {
                 lockTailEntry(entry);
+                if (entry != tail) {
+                    entry.next.addReadLock();
+                }
             } else {
                 lockEntry(entry);
             }
