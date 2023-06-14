@@ -43,6 +43,9 @@ public class TimerTaskEntry {
         this.readWriteLock = new ReentrantReadWriteLock();
     }
 
+    public TimerTask getTimerTask() {
+        return timerTask;
+    }
 
     public TimerTaskList getTimerTaskList() {
         return timerTaskList;

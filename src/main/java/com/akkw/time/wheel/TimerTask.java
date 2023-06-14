@@ -12,6 +12,9 @@ public class TimerTask implements Runnable {
 
     }
 
+    public long getDelayMs() {
+        return delayMs;
+    }
 
     public void setTimerTaskEntry(TimerTaskEntry timerTaskEntry) {
         this.timerTaskEntry = timerTaskEntry;

@@ -8,6 +8,7 @@ import com.cronutils.parser.CronParser;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 import static com.cronutils.model.CronType.QUARTZ;
 
@@ -29,4 +30,9 @@ public class TimeUtils {
         return duration.getSeconds();
     }
 
+
+
+    public static long hiResClockMs() {
+        return TimeUnit.NANOSECONDS.toMillis(System.nanoTime());
+    }
 }

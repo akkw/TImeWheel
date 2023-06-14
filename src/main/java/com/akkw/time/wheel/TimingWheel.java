@@ -1,5 +1,7 @@
 package com.akkw.time.wheel;
 
+import java.util.concurrent.DelayQueue;
+
 public class TimingWheel {
     /**
      * 向前推进一格Buckets所需的时间
@@ -33,12 +35,15 @@ public class TimingWheel {
     private TimingWheel overflowWheel;
 
 
-    public TimingWheel(long tickMs, int wheelSize, long startMs) {
+    private DelayQueue<TimerTaskList> delayQueue;
+
+    public TimingWheel(long tickMs, int wheelSize, long startMs, DelayQueue<TimerTaskList> delayQueue) {
         this.tickMs = tickMs;
         this.wheelSize = wheelSize;
         this.buckets = new TimerTaskList[wheelSize];
         this.currentTime = startMS - (startMs % tickMs);
         this.interval = tickMs * wheelSize;
+        this.delayQueue = delayQueue;
     }
 
 
@@ -46,33 +51,33 @@ public class TimingWheel {
         if (this.overflowWheel != null) {
             return;
         }
-        this.overflowWheel = new TimingWheel(
-                interval,
-                wheelSize,
-                currentTime
-        );
+        this.overflowWheel = new TimingWheel(interval, wheelSize, currentTime, delayQueue);
     }
 
 
-    public void add(TimerTaskEntry timerTaskEntry) {
+    public boolean add(TimerTaskEntry timerTaskEntry) {
         long expiration = timerTaskEntry.getExpiration();
         if (timerTaskEntry.isCancelled()) {
-
+            return false;
         } else if (expiration < currentTime + tickMs) {
-
+            // 添加时在当前格子已经过期
+            // 返回 false 立即执行
+            return false;
         } else if (expiration < currentTime + interval) {
             int virtualId = (int) (expiration / tickMs);
             TimerTaskList bucket = buckets[virtualId];
 
             bucket.add(timerTaskEntry);
 
-            // TODO 加入延迟队列
+            if (bucket.setExpiration(virtualId * tickMs)) {
+                delayQueue.offer(bucket);
+            }
+            return true;
         } else {
             createOverflowWheel();
 
-            overflowWheel.add(timerTaskEntry);
+            return overflowWheel.add(timerTaskEntry);
         }
-
     }
 
     public void advanceClock(long timeMs) {

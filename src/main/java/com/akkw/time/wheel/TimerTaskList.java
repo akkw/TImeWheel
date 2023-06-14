@@ -2,15 +2,18 @@ package com.akkw.time.wheel;
 
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
+import java.sql.Time;
+import java.util.concurrent.Delayed;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Function;
 
-public class TimerTaskList {
+public class TimerTaskList implements Delayed {
 
     private TimerTaskEntry head;
 
-    private TimerTaskEntry tail;
+    private  TimerTaskEntry tail;
 
     private volatile long expiration;
 
@@ -184,5 +187,36 @@ public class TimerTaskList {
 
     private boolean compareAndSetTail(TimerTaskEntry expect, TimerTaskEntry update) {
         return TAIL.compareAndSet(this, expect, update);
+    }
+
+    @Override
+    public long getDelay(TimeUnit unit) {
+        return unit.convert(Math.max(this.getExpiration() - TimeUnit.NANOSECONDS.toMillis(System.nanoTime()), 0), TimeUnit.MILLISECONDS);
+    }
+
+    @Override
+    public int compareTo(Delayed d) {
+        if (d instanceof TimerTaskList) {
+            TimerTaskList timerTaskList = (TimerTaskList) d;
+            if (this.getExpiration() < timerTaskList.getExpiration()) {
+                return -1;
+            } else if (this.getExpiration() > timerTaskList.getExpiration()) {
+                return 1;
+            }
+        }
+        return 0;
+    }
+
+    public void flush(Function<TimerTaskEntry, Void> function) throws Exception {
+        synchronized (this) {
+            TimerTaskEntry current = head.next;
+
+            while (current != null) {
+                remove(current);
+                function.apply(current);
+                current = head.next;
+            }
+            EXPIRATION.set(this, -1L);
+        }
     }
 }
