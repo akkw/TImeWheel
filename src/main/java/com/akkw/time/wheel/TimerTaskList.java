@@ -7,6 +7,7 @@ import java.util.concurrent.Delayed;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 public class TimerTaskList implements Delayed {
@@ -207,13 +208,13 @@ public class TimerTaskList implements Delayed {
         return 0;
     }
 
-    public void flush(Function<TimerTaskEntry, Void> function) throws Exception {
+    public void flush(Consumer<TimerTaskEntry> function) throws Exception {
         synchronized (this) {
             TimerTaskEntry current = head.next;
 
             while (current != null) {
                 remove(current);
-                function.apply(current);
+                function.accept(current);
                 current = head.next;
             }
             EXPIRATION.set(this, -1L);

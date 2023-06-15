@@ -17,7 +17,7 @@ public class Timer {
 
     private ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock();
 
-    private  TimeAdvanceExecutor defaultTimeAdvanceClockExecutor;
+    private TimeAdvanceExecutor defaultTimeAdvanceClockExecutor;
 
     Consumer<TimerTaskEntry> function = this::addTimerTaskEntry;
 
@@ -33,7 +33,6 @@ public class Timer {
     }
 
 
-
     public void add(TimerTask timerTask) {
         addTimerTaskEntry(new TimerTaskEntry(timerTask.getDelayMs() + TimeUtils.hiResClockMs(), timerTask));
     }
@@ -45,8 +44,18 @@ public class Timer {
     }
 
 
-    public void advanceClock(long timeoutMs) throws InterruptedException {
+    public void advanceClock(long timeoutMs) throws Exception {
         TimerTaskList bucket = delayQueue.poll(timeoutMs, TimeUnit.MILLISECONDS);
+
+        if (bucket != null) {
+
+            while (bucket != null) {
+                timingWheel.advanceClock(bucket.getExpiration());
+                bucket.flush(function);
+                bucket = delayQueue.poll();
+            }
+
+        }
     }
 
 }
