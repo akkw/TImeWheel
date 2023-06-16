@@ -1,8 +1,9 @@
 package com.akkw.time.wheel;
 
+import java.util.concurrent.Callable;
 import java.util.concurrent.FutureTask;
 
-public abstract class TimerTask  implements Runnable{
+public abstract class TimerTask<T>  implements Callable<T> {
     private long delayMs;
 
     private TimerTaskEntry timerTaskEntry;

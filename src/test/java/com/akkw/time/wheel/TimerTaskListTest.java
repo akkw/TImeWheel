@@ -19,7 +19,7 @@ public class TimerTaskListTest {
     public void addList() {
         int size = 10;
         for (int i = 1; i <= size; i++) {
-            timerTaskList.add(new TimerTaskEntry(i, new TimerTask()));
+            timerTaskList.add(new TimerTaskEntry(i, new TimerFuture<>(new MockTimerTask())));
         }
         headForEach(timerTaskList, new ArrayList<>());
         tailForEach(timerTaskList, size, new ArrayList<>());
@@ -28,18 +28,18 @@ public class TimerTaskListTest {
 
     @Test
     public void removeList() throws Exception {
-        TimerTaskEntry timerTaskEntry = new TimerTaskEntry(4, new TimerTask());
-        TimerTaskEntry timerTaskEntry1 = new TimerTaskEntry(6, new TimerTask());
-        TimerTaskEntry timerTaskEntry2 = new TimerTaskEntry(7, new TimerTask());
+        TimerTaskEntry timerTaskEntry = new TimerTaskEntry(4,  new TimerFuture<>(new MockTimerTask()));
+        TimerTaskEntry timerTaskEntry1 = new TimerTaskEntry(6,  new TimerFuture<>(new MockTimerTask()));
+        TimerTaskEntry timerTaskEntry2 = new TimerTaskEntry(7,  new TimerFuture<>(new MockTimerTask()));
         timerTaskEntry.setTimerTaskList(timerTaskList);
         timerTaskEntry1.setTimerTaskList(timerTaskList);
         timerTaskEntry2.setTimerTaskList(timerTaskList);
 
-        timerTaskList.add(new TimerTaskEntry(1, new TimerTask()));
-        timerTaskList.add(new TimerTaskEntry(2, new TimerTask()));
-        timerTaskList.add(new TimerTaskEntry(3, new TimerTask()));
+        timerTaskList.add(new TimerTaskEntry(1,  new TimerFuture<>(new MockTimerTask())));
+        timerTaskList.add(new TimerTaskEntry(2,  new TimerFuture<>(new MockTimerTask())));
+        timerTaskList.add(new TimerTaskEntry(3,  new TimerFuture<>(new MockTimerTask())));
         timerTaskList.add(timerTaskEntry);
-        timerTaskList.add(new TimerTaskEntry(5, new TimerTask()));
+        timerTaskList.add(new TimerTaskEntry(5,  new TimerFuture<>(new MockTimerTask())));
         timerTaskList.add(timerTaskEntry1);
         timerTaskList.add(timerTaskEntry2);
 
@@ -51,14 +51,14 @@ public class TimerTaskListTest {
 
     @Test
     public void currentAddAndRemoveTail() throws InterruptedException {
-        TimerTaskEntry timerTaskEntry1 = new TimerTaskEntry(1, new TimerTask());
-        TimerTaskEntry timerTaskEntry2 = new TimerTaskEntry(2, new TimerTask());
-        TimerTaskEntry timerTaskEntry3 = new TimerTaskEntry(3, new TimerTask());
-        TimerTaskEntry timerTaskEntry4 = new TimerTaskEntry(4, new TimerTask());
-        TimerTaskEntry timerTaskEntry5 = new TimerTaskEntry(5, new TimerTask());
-        TimerTaskEntry timerTaskEntry6 = new TimerTaskEntry(6, new TimerTask());
-        TimerTaskEntry timerTaskEntry7 = new TimerTaskEntry(7, new TimerTask());
-        TimerTaskEntry timerTaskEntry8 = new TimerTaskEntry(8, new TimerTask());
+        TimerTaskEntry timerTaskEntry1 = new TimerTaskEntry(1,  new TimerFuture<>(new MockTimerTask()));
+        TimerTaskEntry timerTaskEntry2 = new TimerTaskEntry(2,  new TimerFuture<>(new MockTimerTask()));
+        TimerTaskEntry timerTaskEntry3 = new TimerTaskEntry(3,  new TimerFuture<>(new MockTimerTask()));
+        TimerTaskEntry timerTaskEntry4 = new TimerTaskEntry(4,  new TimerFuture<>(new MockTimerTask()));
+        TimerTaskEntry timerTaskEntry5 = new TimerTaskEntry(5,  new TimerFuture<>(new MockTimerTask()));
+        TimerTaskEntry timerTaskEntry6 = new TimerTaskEntry(6,  new TimerFuture<>(new MockTimerTask()));
+        TimerTaskEntry timerTaskEntry7 = new TimerTaskEntry(7,  new TimerFuture<>(new MockTimerTask()));
+        TimerTaskEntry timerTaskEntry8 = new TimerTaskEntry(8,  new TimerFuture<>(new MockTimerTask()));
         timerTaskEntry1.setTimerTaskList(timerTaskList);
         timerTaskEntry2.setTimerTaskList(timerTaskList);
         timerTaskEntry3.setTimerTaskList(timerTaskList);
@@ -121,14 +121,14 @@ public class TimerTaskListTest {
 
     @Test
     public void currentAddAndRemove() throws InterruptedException {
-        TimerTaskEntry timerTaskEntry1 = new TimerTaskEntry(1, new TimerTask());
-        TimerTaskEntry timerTaskEntry2 = new TimerTaskEntry(2, new TimerTask());
-        TimerTaskEntry timerTaskEntry3 = new TimerTaskEntry(3, new TimerTask());
-        TimerTaskEntry timerTaskEntry4 = new TimerTaskEntry(4, new TimerTask());
-        TimerTaskEntry timerTaskEntry5 = new TimerTaskEntry(5, new TimerTask());
-        TimerTaskEntry timerTaskEntry6 = new TimerTaskEntry(6, new TimerTask());
-        TimerTaskEntry timerTaskEntry7 = new TimerTaskEntry(7, new TimerTask());
-        TimerTaskEntry timerTaskEntry8 = new TimerTaskEntry(8, new TimerTask());
+        TimerTaskEntry timerTaskEntry1 = new TimerTaskEntry(1,  new TimerFuture<>(new MockTimerTask()));
+        TimerTaskEntry timerTaskEntry2 = new TimerTaskEntry(2,  new TimerFuture<>(new MockTimerTask()));
+        TimerTaskEntry timerTaskEntry3 = new TimerTaskEntry(3,  new TimerFuture<>(new MockTimerTask()));
+        TimerTaskEntry timerTaskEntry4 = new TimerTaskEntry(4,  new TimerFuture<>(new MockTimerTask()));
+        TimerTaskEntry timerTaskEntry5 = new TimerTaskEntry(5,  new TimerFuture<>(new MockTimerTask()));
+        TimerTaskEntry timerTaskEntry6 = new TimerTaskEntry(6,  new TimerFuture<>(new MockTimerTask()));
+        TimerTaskEntry timerTaskEntry7 = new TimerTaskEntry(7,  new TimerFuture<>(new MockTimerTask()));
+        TimerTaskEntry timerTaskEntry8 = new TimerTaskEntry(8,  new TimerFuture<>(new MockTimerTask()));
         timerTaskEntry1.setTimerTaskList(timerTaskList);
         timerTaskEntry2.setTimerTaskList(timerTaskList);
         timerTaskEntry3.setTimerTaskList(timerTaskList);
@@ -236,7 +236,7 @@ public class TimerTaskListTest {
 
         int size = 200;
         for (int i = 1; i <= size; i++) {
-            TimerTaskEntry timerTaskEntry = new TimerTaskEntry(i, new TimerTask());
+            TimerTaskEntry timerTaskEntry = new TimerTaskEntry(i,  new TimerFuture<>(new MockTimerTask()));
             timerTaskEntry.setTimerTaskList(timerTaskList);
             timerTaskList.add(timerTaskEntry);
             if (arrayList.contains(i)) {

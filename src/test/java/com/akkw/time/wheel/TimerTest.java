@@ -21,12 +21,10 @@ public class TimerTest {
                 }
             }
         }).start();
-        TimerTask timerTask = new TimerTask();
+        TimerTask<String> timerTask = new MockTimerTask();
 
         timerTask.setDelayMs(10000);
-        timer.add(timerTask);
-
-
-        new CountDownLatch(1).await();
+        TimerFuture<String> add = timer.add(timerTask);
+        System.out.println(add.get());
     }
 }

@@ -15,10 +15,6 @@ public class Timer {
 
     private final TimingWheel timingWheel;
 
-    private ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock();
-
-    private TimeAdvanceExecutor defaultTimeAdvanceClockExecutor;
-
     Consumer<TimerTaskEntry> function = this::addTimerTaskEntry;
 
     public Timer(String executorName, long tickMs, int wheelSize, long startMs) {
@@ -32,13 +28,22 @@ public class Timer {
     }
 
 
-    public void add(TimerTask timerTask) {
-        addTimerTaskEntry(new TimerTaskEntry(timerTask.getDelayMs() + TimeUtils.hiResClockMs(), timerTask));
+    public <T> TimerFuture<T> add(TimerTask<T> timerTask) {
+        if (timerTask == null) {
+            throw new NullPointerException("timerTask null");
+        }
+        TimerFuture<T> timerFuture = newFuture(timerTask);
+        addTimerTaskEntry( new TimerTaskEntry(timerTask.getDelayMs() + TimeUtils.hiResClockMs(), timerFuture));
+        return timerFuture;
+    }
+
+    private <T> TimerFuture<T> newFuture(TimerTask<T> timerTask) {
+        return new TimerFuture<>(timerTask);
     }
 
     private void addTimerTaskEntry(TimerTaskEntry timerTaskEntry) {
         if (!timingWheel.add(timerTaskEntry) && !timerTaskEntry.isCancelled()) {
-            taskExecutor.submit(timerTaskEntry.getTimerTask());
+            taskExecutor.submit(timerTaskEntry.getTimerFuture());
         }
     }
 

@@ -2,8 +2,6 @@ package com.akkw.time.wheel;
 
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
-import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
-import java.util.concurrent.locks.AbstractQueuedSynchronizer;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -11,8 +9,6 @@ public class TimerTaskEntry {
     private long expiration;
 
     private boolean cancelled;
-
-    private TimerTask timerTask;
 
     private TimerTaskList timerTaskList;
 
@@ -23,6 +19,7 @@ public class TimerTaskEntry {
     private final ReadWriteLock readWriteLock;
 
 
+    private final TimerFuture<?> timerFuture;
     private static final VarHandle NEXT;
     private static final VarHandle PREV;
 
@@ -37,15 +34,14 @@ public class TimerTaskEntry {
         }
     }
 
-    public TimerTaskEntry(long expiration, TimerTask timerTask) {
+    public TimerTaskEntry(long expiration, TimerFuture<?> timerFuture) {
         this.expiration = expiration;
-        this.timerTask = timerTask;
         this.readWriteLock = new ReentrantReadWriteLock();
-        this.timerTask.setTimerTaskEntry(this);
+        this.timerFuture = timerFuture;
     }
 
-    public TimerTask getTimerTask() {
-        return timerTask;
+    public TimerFuture<?> getTimerFuture() {
+        return timerFuture;
     }
 
     public TimerTaskList getTimerTaskList() {
