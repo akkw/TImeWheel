@@ -29,7 +29,6 @@ public class Timer {
             }
         });
         this.timingWheel = new TimingWheel(tickMs, wheelSize, startMs, delayQueue);
-        this.defaultTimeAdvanceClockExecutor.advanceClock(timingWheel);
     }
 
 

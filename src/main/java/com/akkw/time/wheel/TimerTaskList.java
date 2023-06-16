@@ -58,7 +58,7 @@ public class TimerTaskList implements Delayed {
         if (entry == null) {
             return false;
         }
-
+        entry.setTimerTaskList(this);
 
         for (; ; ) {
             TimerTaskEntry t = tail;
@@ -118,8 +118,8 @@ public class TimerTaskList implements Delayed {
                 }
                 prev.readUnlock();
             }
-            entry.next = entry;
-            entry.prev = entry;
+            entry.next = null;
+            entry.prev = null;
         }
     }
 
@@ -192,7 +192,7 @@ public class TimerTaskList implements Delayed {
 
     @Override
     public long getDelay(TimeUnit unit) {
-        return unit.convert(Math.max(this.getExpiration() - TimeUnit.NANOSECONDS.toMillis(System.nanoTime()), 0), TimeUnit.MILLISECONDS);
+        return unit.convert(Math.max(this.getExpiration() - TimeUtils.hiResClockMs(), 0), TimeUnit.MILLISECONDS);
     }
 
     @Override

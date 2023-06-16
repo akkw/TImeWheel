@@ -12,8 +12,6 @@ public class TimingWheel {
     private int wheelSize;
 
 
-    private int startMS;
-
     /**
      * 本层时间轮上任务总数
      */
@@ -37,11 +35,14 @@ public class TimingWheel {
 
     private DelayQueue<TimerTaskList> delayQueue;
 
+
+    private int plies;
+
     public TimingWheel(long tickMs, int wheelSize, long startMs, DelayQueue<TimerTaskList> delayQueue) {
         this.tickMs = tickMs;
         this.wheelSize = wheelSize;
         this.buckets = new TimerTaskList[wheelSize];
-        this.currentTime = startMS - (startMs % tickMs);
+        this.currentTime = startMs - (startMs % tickMs);
         this.interval = tickMs * wheelSize;
         this.delayQueue = delayQueue;
     }
@@ -52,6 +53,7 @@ public class TimingWheel {
             return;
         }
         this.overflowWheel = new TimingWheel(interval, wheelSize, currentTime, delayQueue);
+        this.overflowWheel.setPlies(this.plies + 1);
     }
 
 
@@ -65,7 +67,9 @@ public class TimingWheel {
             return false;
         } else if (expiration < currentTime + interval) {
             int virtualId = (int) (expiration / tickMs);
-            TimerTaskList bucket = buckets[virtualId];
+
+            TimerTaskList bucket = bucket(virtualId % wheelSize);
+
 
             bucket.add(timerTaskEntry);
 
@@ -78,6 +82,22 @@ public class TimingWheel {
 
             return overflowWheel.add(timerTaskEntry);
         }
+    }
+
+    void setPlies(int plies) {
+        this.plies = plies;
+    }
+
+    private TimerTaskList bucket(int index) {
+        if (buckets[index] == null) {
+            synchronized (buckets) {
+                if (buckets[index] == null) {
+                    buckets[index] =  new TimerTaskList();
+                }
+                return buckets[index];
+            }
+        }
+        return buckets[index];
     }
 
     public void advanceClock(long timeMs) {

@@ -1,22 +1,26 @@
 package com.akkw.time.wheel;
 
-public class TimerTask implements Runnable {
-    private long delayMs;
+import java.util.concurrent.FutureTask;
 
+public abstract class TimerTask  implements Runnable{
+    private long delayMs;
 
     private TimerTaskEntry timerTaskEntry;
 
 
-    @Override
-    public void run() {
 
+    public void setDelayMs(long delayMs) {
+        this.delayMs = delayMs;
     }
 
     public long getDelayMs() {
         return delayMs;
     }
 
-    public void setTimerTaskEntry(TimerTaskEntry timerTaskEntry) {
+    public synchronized void setTimerTaskEntry(TimerTaskEntry timerTaskEntry) {
+        if (this.timerTaskEntry != null && timerTaskEntry != this.timerTaskEntry) {
+            timerTaskEntry.remove();
+        }
         this.timerTaskEntry = timerTaskEntry;
     }
 }

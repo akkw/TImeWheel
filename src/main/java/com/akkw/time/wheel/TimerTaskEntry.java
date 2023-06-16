@@ -41,6 +41,7 @@ public class TimerTaskEntry {
         this.expiration = expiration;
         this.timerTask = timerTask;
         this.readWriteLock = new ReentrantReadWriteLock();
+        this.timerTask.setTimerTaskEntry(this);
     }
 
     public TimerTask getTimerTask() {
